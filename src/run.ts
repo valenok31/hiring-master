@@ -8,7 +8,11 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
      * Тут что-то вызываем в правильном порядке executor.executeTask для тасков из очереди queue
      */
 
-    console.log('queue'); // 1,2,3,4,5
+    console.log(queue.q.forEach(()=>{
+        return x
+    }))
+
+    console.log(queue.q[0].targetId); // 1,2,3,4,5
     console.log(JSON.stringify(queue)); // 1,2,3,4,5
 
 
