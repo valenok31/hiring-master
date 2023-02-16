@@ -1,4 +1,4 @@
-import {IExecutor} from './Executor';
+import Executor, {IExecutor} from './Executor';
 import ITask from './Task';
 
 export default async function run(executor: IExecutor, queue: AsyncIterable<ITask>, maxThreads = 0) {
@@ -7,20 +7,37 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
      * Код надо писать сюда
      * Тут что-то вызываем в правильном порядке executor.executeTask для тасков из очереди queue
      */
-    const arr: any = [];
+
+    let execClass = new Executor();
+    let arr: any = [];
     const arrTargetId: any = [];
     let thread: number = 0;
     let i: number = 0;
     //    [ 'targetId', 'action', '_onExecute', '_onComplete', 'acquired' ]
 
     for await (const line of queue) {
-        arr.push(line);
+        console.log(line.action)
+        if (line.action == 'cleanup') {
+            if (arrTargetId.includes(line.targetId)) {
+                await execClass.executeTask(line);
+
+            } else {
+                arrTargetId.push(line.targetId);
+                if (maxThreads === 0) {
+                     execClass.executeTask(line);
+                } else {
+                    if (thread <= maxThreads) {
+                        thread++;
+                         execClass.executeTask(line);
+                    } else {
+                        await execClass.executeTask(line);
+                    }
+                }
+            }
+        } else {
+
+            await  execClass.executeTask(line);
+
+        }
     }
-    arr.forEach((l: any) => {
-        arrTargetId.push(executor.executeTask(l));
-
-    })
-
-    await Promise.all(arrTargetId)
-    console.log(arr);
 }
