@@ -97,33 +97,33 @@ export default class Executor implements IExecutor {
 
         switch (task.action) {
             case 'init': {
-                await sleep(1 * (1 + targetId / 10));
+                await sleep(10 * (1 + targetId / 10));
                 this.recordPerformance(false);
-                await sleep(3 * (1 + targetId / 10));
+                await sleep(30 * (1 + targetId / 10));
                 break;
             }
             case 'prepare': {
-                await sleep(3 * (1 + targetId / 10));
+                await sleep(30 * (1 + targetId / 10));
                 this.recordPerformance(false);
-                await sleep(7 * (1 + targetId / 10));
+                await sleep(70 * (1 + targetId / 10));
                 break;
             }
             case 'work': {
-                await sleep(5 * (1 + targetId / 10));
+                await sleep(50 * (1 + targetId / 10));
                 this.recordPerformance(false);
-                await sleep(15 * (1 + targetId / 10));
+                await sleep(150 * (1 + targetId / 10));
                 break;
             }
             case 'finalize': {
-                await sleep(3 * (1 + targetId / 10));
+                await sleep(30 * (1 + targetId / 10));
                 this.recordPerformance(false);
-                await sleep(7 * (1 + targetId / 10));
+                await sleep(70 * (1 + targetId / 10));
                 break;
             }
             default: {
-                await sleep(2); //25
+                await sleep(25);
                 this.recordPerformance(false);
-                await sleep(2); //25
+                await sleep(25);
                 break;
             }
         }

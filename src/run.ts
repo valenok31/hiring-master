@@ -8,36 +8,16 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
      * Тут что-то вызываем в правильном порядке executor.executeTask для тасков из очереди queue
      */
 
-    let execClass = new Executor();
-    let arr: any = [];
-    const arrTargetId: any = [];
-    let thread: number = 0;
-    let i: number = 0;
-    //    [ 'targetId', 'action', '_onExecute', '_onComplete', 'acquired' ]
+    const arr: any = [];
+    const arrTask = [];
+    let taskNext = [];
+    let i = 0;
 
-    for await (const line of queue) {
-        console.log(line.action)
-        if (line.action == 'cleanup') {
-            if (arrTargetId.includes(line.targetId)) {
-                await execClass.executeTask(line);
+    for await (let task of queue) {
+        executor.executeTask(task)
+       // await executor.executeTask(task)
 
-            } else {
-                arrTargetId.push(line.targetId);
-                if (maxThreads === 0) {
-                     execClass.executeTask(line);
-                } else {
-                    if (thread <= maxThreads) {
-                        thread++;
-                         execClass.executeTask(line);
-                    } else {
-                        await execClass.executeTask(line);
-                    }
-                }
-            }
-        } else {
-
-            await  execClass.executeTask(line);
-
-        }
     }
+
+
 }
