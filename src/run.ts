@@ -21,35 +21,35 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     for await (let task of queue) {
 
-        /*        if ((arrTask.includes(arr[n + 1]) || arrTask.includes(arr[n])) && arrTask.length>2) {
-                    await executor.executeTask(task);
-                } else {
-        /!*            if (maxThreads === 0) {
-                        executor.executeTask(task);
-                    } else {
-                        if (arrTask.length < maxThreads) {
+        if (true || (arrTask.includes(arr[n + 1]) || arrTask.includes(arr[n])) || arrTask.length > 1) {
+            await executor.executeTask(task);
+        } else {
+            /*            if (maxThreads === 0) {
                             executor.executeTask(task);
                         } else {
-                            await executor.executeTask(task);
-                        }
-                    }*!/
-                    executor.executeTask(task);
-
-                }*/
-
-        if (bool && arr[n] != arr[n + 1] && arr[n + 1] != arr[n + 2] && arr[n] != arr[n + 2]) {
+                            if (arrTask.length < maxThreads) {
+                                executor.executeTask(task);
+                            } else {
+                                await executor.executeTask(task);
+                            }
+                        }*/
             executor.executeTask(task);
-           // bool = false;
-            if (n === 1) {
-                bool = false;
-            }
 
-        } else {
-            await executor.executeTask(task);
-            //bool = true;
         }
 
-        //arrTask.push(task.targetId);
+        /*     if (bool && arr[n] != arr[n + 1] && arr[n + 1] != arr[n + 2] && arr[n] != arr[n + 2]) {
+                 executor.executeTask(task);
+                // bool = false;
+                 if (n === 1) {
+                     bool = false;
+                 }
+
+             } else {
+                 await executor.executeTask(task);
+                 //bool = true;
+             }*/
+
+        arrTask.push(task.targetId);
         n++;
         //arr.shift();
     }
