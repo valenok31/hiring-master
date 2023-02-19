@@ -37,12 +37,12 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
                 }*/
 
-        if (bool && arr[n] != arr[n + 1]/* && arr[n + 1] != arr[n + 2] && arr[n] != arr[n + 2]*/) {
+        if (bool && arr[n] != arr[n + 1] && arr[n + 1] != arr[n + 2] && arr[n] != arr[n + 2]) {
             executor.executeTask(task);
-            bool = false;
-/*            if (n === 2) {
+           // bool = false;
+            if (n === 1) {
                 bool = false;
-            }*/
+            }
 
         } else {
             await executor.executeTask(task);
