@@ -9,15 +9,52 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
      */
 
     const arr: any = [];
-    const arrTask = [];
-    let taskNext = [];
-    let i = 0;
+    const arrTask: any = [];
+    let taskNext = JSON.parse(JSON.stringify(queue));
+    let bool = true;
+    let n = 0;
+
+    for (let i of taskNext.q) {
+        arr.push(i.targetId);
+    }
+
 
     for await (let task of queue) {
-        executor.executeTask(task)
-       // await executor.executeTask(task)
 
+        /*        if ((arrTask.includes(arr[n + 1]) || arrTask.includes(arr[n])) && arrTask.length>2) {
+                    await executor.executeTask(task);
+                } else {
+        /!*            if (maxThreads === 0) {
+                        executor.executeTask(task);
+                    } else {
+                        if (arrTask.length < maxThreads) {
+                            executor.executeTask(task);
+                        } else {
+                            await executor.executeTask(task);
+                        }
+                    }*!/
+                    executor.executeTask(task);
+
+                }*/
+
+        if (bool && arr[n] != arr[n + 1]/* && arr[n + 1] != arr[n + 2] && arr[n] != arr[n + 2]*/) {
+            executor.executeTask(task);
+            bool = false;
+/*            if (n === 2) {
+                bool = false;
+            }*/
+
+        } else {
+            await executor.executeTask(task);
+            //bool = true;
+        }
+
+        //arrTask.push(task.targetId);
+        n++;
+        //arr.shift();
     }
+    // console.log(taskNext.q);
+    console.log(arr);
 
 
 }
