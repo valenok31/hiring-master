@@ -22,25 +22,28 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     for (let i of taskNext.q) {
         arr.push(i.targetId);
     }
-    console.log(maxThreads);
+    //console.log(maxThreads);
 
     for await (let task of queue) {
-        arrTaskRunning.push(task.targetId);
-        if (arr[n + 1] === undefined || arr[n] === undefined) {
-            await executor.executeTask(task);
+
+        if (arrTaskRunning.includes(task.targetId)) {
+            console.log("continue");
             continue;
-        }
-        if (arrTaskRunning.length <= maxThreads) {
-            if (!arrTaskRunning.includes(arr[n + 1])) {
-                executor.executeTask(task);
-            } else {
-                arrTaskRunning.length = 0;
-                await executor.executeTask(task);
-            }
         } else {
-            arrTaskRunning.length = 0;
-            await executor.executeTask(task);
+            if (arrTaskRunning.length <= maxThreads) {
+                arrTaskRunning.push(task.targetId);
+                //console.log(arrTaskRunning)
+                executor.executeTask(task).then((r) => {
+                    arrTaskRunning.splice(arrTaskRunning.indexOf(task.targetId), 1);
+                    console.log(arrTaskRunning);
+                    console.log(r);
+                })
+                //console.log(arrTaskRunning)
+            } else {
+                continue;
+            }
         }
-        n++;
+
+
     }
 }
