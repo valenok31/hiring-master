@@ -1,5 +1,6 @@
 import Executor, {IExecutor} from './Executor';
 import ITask from './Task';
+import {log} from "util";
 
 export default async function run(executor: IExecutor, queue: AsyncIterable<ITask>, maxThreads = 0) {
     maxThreads = Math.max(0, maxThreads);
@@ -26,24 +27,20 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     for await (let task of queue) {
 
-        if (arrTaskRunning.includes(task.targetId)) {
-            console.log("continue");
-            continue;
-        } else {
-            if (arrTaskRunning.length <= maxThreads) {
-                arrTaskRunning.push(task.targetId);
-                //console.log(arrTaskRunning)
-                executor.executeTask(task).then((r) => {
+        let promises = executor.executeTask(task);
+
+        if(!arrTaskRunning.includes(task.targetId)){
+            arrTaskRunning.push(task.targetId);
+            promises.finally(() => {
+                if (arrTaskRunning.indexOf(task.targetId) != -1) {
                     arrTaskRunning.splice(arrTaskRunning.indexOf(task.targetId), 1);
-                    console.log(arrTaskRunning);
-                    console.log(r);
-                })
-                //console.log(arrTaskRunning)
-            } else {
-                continue;
-            }
+                }
+            });
         }
 
 
+
     }
+    console.log(arrTaskRunning)
+
 }
