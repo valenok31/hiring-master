@@ -27,19 +27,20 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     for await (let task of queue) {
 
-        let promises = executor.executeTask(task);
+        const promises = executor.executeTask(task);
+        if (arrTaskRunning.length < maxThreads) {
+            if (!arrTaskRunning.includes(task.targetId)) {
+                arrTaskRunning.push(task.targetId);
+                promises.finally(() => {
+                    const index = arrTaskRunning.indexOf(task.targetId);
+                    if (index !== -1) {
+                        arrTaskRunning.splice(index, 1);
+                    }
+                });
+            }
 
-        if(!arrTaskRunning.includes(task.targetId)){
-            arrTaskRunning.push(task.targetId);
-            promises.finally(() => {
-                if (arrTaskRunning.indexOf(task.targetId) != -1) {
-                    arrTaskRunning.splice(arrTaskRunning.indexOf(task.targetId), 1);
-                }
-            });
+
         }
-
-
-
     }
     console.log(arrTaskRunning)
 
