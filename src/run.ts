@@ -26,9 +26,43 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     //console.log(maxThreads);
 
     for await (let task of queue) {
-
         const promises = executor.executeTask(task);
-        if (arrTaskRunning.length < maxThreads) {
+
+
+        arrTaskRunning.push(task.targetId);
+        if (arr[n + 1] === undefined || arr[n] === undefined) {
+            await executor.executeTask(task);
+            continue;
+        }
+
+
+        if (arrTaskRunning.length <= maxThreads - 1 && arrTask.length <= maxThreads - 1) {
+            if (!arrTaskRunning.includes(arr[n + 1])) {
+                if (!arrTask.includes(task.targetId)) {
+                    //executor.executeTask(task);
+                    arrTask.push(task.targetId);
+                    promises.finally(() => {
+                        const index = arrTask.indexOf(task.targetId);
+                        if (index !== -1) {
+                            arrTask.splice(index, 1);
+                        }
+                    });
+                }
+            } else {
+                await executor.executeTask(task);
+                arrTaskRunning.length = 0;
+            }
+        } else {
+            await executor.executeTask(task);
+            arrTaskRunning.length = 0;
+        }
+        n++;
+
+
+        /*  =============================================  */
+
+        //const promises = executor.executeTask(task);
+ /*       if (arrTaskRunning.length < maxThreads) {
             if (!arrTaskRunning.includes(task.targetId)) {
                 arrTaskRunning.push(task.targetId);
                 promises.finally(() => {
@@ -38,10 +72,8 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                     }
                 });
             }
-
-
-        }
+        }*/
     }
-    console.log(arrTaskRunning)
+    //console.log(arrTaskRunning)
 
 }
