@@ -31,17 +31,22 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     setArr();
 
     function exec(t: ITask) {
-        executor.executeTask(t).then((r) => {
-            spliceArr(arrTaskRunning, t.targetId);
-            /*            const index = arrTaskRunning.indexOf(t.targetId);
-                        if (index !== -1) {
-                            arrTaskRunning.splice(index, 1);
-                        }*/
-            return t.targetId;
-        })
+        executor.executeTask(t)
+            .then((r) => {
+                spliceArr(arrTaskRunning, t.targetId);
+                return t.targetId;
+            })
+            .catch(async () => {
+                await executor.executeTask(t);
+                spliceArr(arrTaskRunning, t.targetId);
+            });
     }
 
-    await generalFor();
+    if (maxThreads < 500) {
+        await generalFor();
+    } else {
+        await withoutThreadsLimit();
+    }
 
 
     function spliceArr(arrS: any, id: any) {
@@ -53,63 +58,75 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
 
     async function generalFor() {
-
         for await (let task of queue) {
-
             if (arrTaskRunning.includes(task.targetId)) {
                 n++; // ??????
                 continue;
             } else {
                 arrTaskRunning.push(task.targetId);
             }
-
-
             if (arr[n + 1] === undefined || arr[n] === undefined) {
                 await executor.executeTask(task);
                 spliceArr(arrTaskRunning, task.targetId);
-                /*                const index = arrTaskRunning.indexOf(task.targetId);
-                                if (index !== -1) {
-                                    arrTaskRunning.splice(index, 1);
-                                }*/
                 n++;
                 continue;
             }
-
-
             if (arrTaskRunning.length <= maxThreads - 1) {
                 if (!arrTaskRunning.includes(arr[n + 1])) {
-                    //executor.executeTask(task);
                     exec(task);
                 } else {
-                    //arrTaskRunning.length = 0;
-
                     await executor.executeTask(task);
                     spliceArr(arrTaskRunning, task.targetId);
-                    /*                    const index = arrTaskRunning.indexOf(task.targetId);
-                                        if (index !== -1) {
-                                            arrTaskRunning.splice(index, 1);
-                                        }*/
                 }
             } else {
-                //arrTaskRunning.length = 0;
                 await executor.executeTask(task);
                 spliceArr(arrTaskRunning, task.targetId);
-                /*                const index = arrTaskRunning.indexOf(task.targetId);
-                                if (index !== -1) {
-                                    arrTaskRunning.splice(index, 1);
-                                }*/
             }
             n++;
-
-
         }
     }
 
+    async function withoutThreadsLimit() {
+        let e=0;
+        const arrTaskSave: ITask[] = [];
+        const arrTaskId: {}[] = [];
+
+        function execX(t: ITask) {
+            executor.executeTask(t)
+                .then((r) => {
+                    spliceArr(arrTaskId, t.targetId);
+                    return t.targetId;
+                })
+                .catch(async () => {
+                    await executor.executeTask(t);
+                    spliceArr(arrTaskId, t.targetId);
+                });
+        }
+
+        forRek(queue);
+
+        async function forRek(arrTaskSave: any) {
+            for await (let task of arrTaskSave) {
+                if (!arrTaskId.includes(task.targetId)) {
+                    arrTaskId.push(task.targetId);
+                    execX(task);
+                } else {
+                    arrTaskSave.push(task);
+                }
+            }
+            e++;
+            if (arrTaskSave.length > 0) {
+                if(e>100){return}
+                forRek(arrTaskSave)
+            } else {
+                return
+            }
+        }
+    }
+
+
     console.log(arrTaskRunning)
-
-
-/*    if (arrTaskRunning.length>0) {
-         generalFor();
-    }*/
-
+    /*    if (arrTaskRunning.length>0) {
+             generalFor();
+        }*/
 }
