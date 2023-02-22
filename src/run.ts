@@ -21,22 +21,18 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     let threads = 0;
     let set = new Set();
 
-    for (let i of taskNext.q) {
-        arr.push(i.targetId);
+    function setArr() {
+        for (let i of taskNext.q) {
+            arr.push(i.targetId);
+        }
+        return arr.length;
     }
+
+    setArr();
     for (let j = 0; j < 4; j++) {
         set.add(arr[j]);
     }
 
-    function prover(setS: any, arrS: any) {
-        if (setS.size === arrS.length) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    const prov = prover(set, arr.slice(0, 4));
     function exec(t: ITask) {
         executor.executeTask(t).then((r) => {
             const index = arrTaskRunning.indexOf(t.targetId);
@@ -47,22 +43,50 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         })
     }
 
-    for await (let task of queue) {
+    async function forGeneral() {
+        for await (let task of queue) {
 
-
-        if (bool && prov) {
             arrTaskRunning.push(task.targetId);
-            exec(task);
-
-            // bool = false;
-            if (n === 2) {
-                bool = false;
+            if (arr[n + 1] === undefined || arr[n] === undefined) {
+                await executor.executeTask(task);
+                const index = arrTaskRunning.indexOf(task.targetId);
+                if (index !== -1) {
+                    arrTaskRunning.splice(index, 1);
+                }
+                n++;
+                continue;
             }
-        } else {
-            await executor.executeTask(task);
+            if (arrTaskRunning.length <= maxThreads - 1) {
+                if (!arrTaskRunning.includes(arr[n + 1])) {
+                    //executor.executeTask(task);
+                    exec(task);
+                } else {
+                    //arrTaskRunning.length = 0;
+                    await executor.executeTask(task);
+                    const index = arrTaskRunning.indexOf(task.targetId);
+                    if (index !== -1) {
+                        arrTaskRunning.splice(index, 1);
+                    }
+                }
+            } else {
+                //arrTaskRunning.length = 0;
+                await executor.executeTask(task);
+                const index = arrTaskRunning.indexOf(task.targetId);
+                if (index !== -1) {
+                    arrTaskRunning.splice(index, 1);
+                }
+            }
+            n++;
+
+
         }
-        n++;
-        console.log(arrTaskRunning);
+        console.log(arrTaskRunning)
+    }
+
+    forGeneral();
+
+    if (setArr() > 0) {
+        forGeneral();
     }
     //console.log(arr);
 }
