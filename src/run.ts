@@ -21,112 +21,84 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     let threads = 0;
 
 
-    function setArr() {
-        for (let i of taskNext.q) {
-            arr.push(i.targetId);
-        }
-        return arr.length;
-    }
-
-    setArr();
-
-    function exec(t: ITask) {
-        executor.executeTask(t)
-            .then((r) => {
-                spliceArr(arrTaskRunning, t.targetId);
-                return t.targetId;
-            })
-            .catch(async () => {
-                await executor.executeTask(t);
-                spliceArr(arrTaskRunning, t.targetId);
-            });
-    }
-
-    if (maxThreads < 500) {
-        await generalFor();
-    } else {
-        await withoutThreadsLimit();
+    for (let i of taskNext.q) {
+        arr.push({
+            targetId: i.targetId,
+            action: i.action,
+            completed: false,
+            running: false,
+        });
     }
 
 
-    function spliceArr(arrS: any, id: any) {
-        const index = arrS.indexOf(id);
-        if (index !== -1) {
-            arrS.splice(index, 1);
-        }
+    function searchTask(taskSearch: ITask) {
+        return arr.find((item: any) => {
+            return (item.targetId == taskSearch.targetId && item.action == taskSearch.action)
+        });
+    }
+
+    async function runningTaskAwait(t: ITask) {
+        await executor.executeTask(t);
+        searchTask(t).completed = true;
+        return;
+    }
+
+    function searchId(id: any) {
+        const result = arr.filter((item: any) => item.targetId == id);
+        return result.find((item: any) => {
+            return (item.running == true)
+        });
+    }
+
+    function searchCompleted() {
+        const result = arr.filter((item: any) => item.completed == false);
+        return result.length;
+    }
+
+
+    function runningTask(t: ITask) {
+        //searchTask(t).running = true;
+        executor.executeTask(t).then((r) => {
+            searchTask(t).completed = true;
+            searchTask(t).running = false;
+        })
+        return t;
     }
 
 
     async function generalFor() {
         for await (let task of queue) {
-            if (arrTaskRunning.includes(task.targetId)) {
-                n++; // ??????
-                continue;
-            } else {
-                arrTaskRunning.push(task.targetId);
-            }
-            if (arr[n + 1] === undefined || arr[n] === undefined) {
-                await executor.executeTask(task);
-                spliceArr(arrTaskRunning, task.targetId);
-                n++;
-                continue;
-            }
-            if (arrTaskRunning.length <= maxThreads - 1) {
-                if (!arrTaskRunning.includes(arr[n + 1])) {
-                    exec(task);
+            let taskFromArr = searchTask(task);
+            if (!taskFromArr.completed && !taskFromArr.running) {
+                if (!!searchId(task.targetId)) {
+                    continue;
                 } else {
-                    await executor.executeTask(task);
-                    spliceArr(arrTaskRunning, task.targetId);
-                }
-            } else {
-                await executor.executeTask(task);
-                spliceArr(arrTaskRunning, task.targetId);
-            }
-            n++;
-        }
-    }
-
-    async function withoutThreadsLimit() {
-        let e=0;
-        const arrTaskSave: ITask[] = [];
-        const arrTaskId: {}[] = [];
-
-        function execX(t: ITask) {
-            executor.executeTask(t)
-                .then((r) => {
-                    spliceArr(arrTaskId, t.targetId);
-                    return t.targetId;
-                })
-                .catch(async () => {
-                    await executor.executeTask(t);
-                    spliceArr(arrTaskId, t.targetId);
-                });
-        }
-
-        forRek(queue);
-
-        async function forRek(arrTaskSave: any) {
-            for await (let task of arrTaskSave) {
-                if (!arrTaskId.includes(task.targetId)) {
-                    arrTaskId.push(task.targetId);
-                    execX(task);
-                } else {
-                    arrTaskSave.push(task);
+                    if (maxThreads > 500) {
+                        runningTask(task);
+                    } else {
+                        searchTask(task).completed = true;
+                        await executor.executeTask(task);
+                    }
                 }
             }
-            e++;
-            if (arrTaskSave.length > 0) {
-                if(e>100){return}
-                forRek(arrTaskSave)
+        }
+
+
+        /*        if (arr[3].completed) {
+                    return
+                }*/
+        setTimeout(async () => {
+            if (!!searchCompleted()) {
+                console.log(searchCompleted())
+                await generalFor();
             } else {
                 return
             }
-        }
+        }, 2000);
+
     }
 
 
-    console.log(arrTaskRunning)
-    /*    if (arrTaskRunning.length>0) {
-             generalFor();
-        }*/
+    await generalFor();
+
 }
