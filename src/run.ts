@@ -20,7 +20,6 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     let n = 0;
     let threads = 0;
 
-
     function setArr() {
         for (let i of taskNext.q) {
             arr.push(i.targetId);
@@ -28,7 +27,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         return arr.length;
     }
 
-    setArr();
+setArr();
 
     function exec(t: ITask) {
         executor.executeTask(t).then((r) => {
@@ -56,59 +55,90 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
         for await (let task of queue) {
 
+            /*            for (let taskSave of arrTask) {
+                            if (!arrTaskRunning.includes(taskSave.targetId)) {
+                                exec(taskSave);
+                            }
+                        }*/
+
+
+
+            //if(true){}
+
             if (arrTaskRunning.includes(task.targetId)) {
-                //n++; // ??????
-                //continue;
-                setTimeout(()=>{exec(task)},100);
+
+                arrTask.push(task);
+                n++;
+                continue;
+                /*                setTimeout(() => {
+                                    exec(task)
+                                }, 150);*/
 
             } else {
-                arrTaskRunning.push(task.targetId);
+                //arrTaskRunning.push(task.targetId);
             }
 
 
             if (arr[n + 1] === undefined || arr[n] === undefined) {
+                arrTaskRunning.push(task.targetId);
                 await executor.executeTask(task);
                 spliceArr(arrTaskRunning, task.targetId);
-                /*                const index = arrTaskRunning.indexOf(task.targetId);
-                                if (index !== -1) {
-                                    arrTaskRunning.splice(index, 1);
-                                }*/
                 n++;
                 continue;
             }
 
+            if (arrTaskRunning.length <= maxThreads /*- 1*/) {
 
-            if (arrTaskRunning.length <= maxThreads - 1) {
+                if (arrTask.length > 0) {
+                    // for (let id = 0; id < arrTask.length; id++) {
+                    console.log(!arrTaskRunning.includes(arrTask[0].targetId));
+                    if (!arrTaskRunning.includes(arrTask[0].targetId)) {
+                        //arrTaskRunning.push(arrTask[0].targetId);
+                        //exec(arrTask[0]);
+                        await executor.executeTask(arrTask[0]);
+                        //spliceArr(arrTaskRunning, arrTask[0].targetId);
+                        arrTask.shift();
+                        //spliceArr(arrTask, arrTask[id].targetId);
+
+                        // }
+                    }
+                }
+
+
+
+
+
                 if (!arrTaskRunning.includes(arr[n + 1])) {
-                    //executor.executeTask(task);
-                    //setTimeout(()=>{},0);
-                    exec(task)
-                } else {
-                    //arrTaskRunning.length = 0;
+                    /*                    if (n == -2) {
+                                            console.log(task.targetId)
+                                            arrTask.push(task);
+                                            n++;
+                                            continue;
+                                        }*/
+                    arrTaskRunning.push(task.targetId);
+                    exec(task);
 
+
+                } else {
+                    arrTaskRunning.push(task.targetId);
                     await executor.executeTask(task);
                     spliceArr(arrTaskRunning, task.targetId);
-                    /*                    const index = arrTaskRunning.indexOf(task.targetId);
-                                        if (index !== -1) {
-                                            arrTaskRunning.splice(index, 1);
-                                        }*/
                 }
-            } else {
-                //arrTaskRunning.length = 0;
-                await executor.executeTask(task);
-                spliceArr(arrTaskRunning, task.targetId);
-                /*                const index = arrTaskRunning.indexOf(task.targetId);
-                                if (index !== -1) {
-                                    arrTaskRunning.splice(index, 1);
-                                }*/
+            }else {
+
+                arrTask.push(task);
+/*                await executor.executeTask(task);
+                spliceArr(arrTaskRunning, task.targetId);*/
             }
+
+
             n++;
 
 
         }
     }
 
-    console.log(arrTaskRunning)
+    //console.log(arrTaskRunning)
 
 
     /*    if (arrTaskRunning.length>0) {
