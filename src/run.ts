@@ -56,9 +56,9 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             }
 
             if (arr[n + 1] === undefined || arr[n] === undefined) {
-                arrTaskRunning.push(task.targetId);
+                //arrTaskRunning.push(task.targetId);
                 await executor.executeTask(task);
-                spliceArr(arrTaskRunning, task.targetId);
+                //spliceArr(arrTaskRunning, task.targetId);
                 n++;
                 continue;
             }
@@ -80,7 +80,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                 if (!arrTaskRunning.includes(arr[n + 1])) {
                     exec(task);
                 } else {
-                    if (arrTask.length==0 || arrTask.length > 2) {
+                    if (arrTask.length == 0 || arrTask.length > 3) {
                         await executor.executeTask(task);
                         spliceArr(arrTaskRunning, task.targetId);
                     } else {
@@ -96,12 +96,13 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         }
     }
 
-    console.log(arrTaskRunning)
+    console.log(arr)
     await generalFor();
     if (arrTask.length > 0) {
-        if (!arrTaskRunning.includes(arrTask[0].targetId)) {
-            await executor.executeTask(arrTask[0]);
+        for await(let r of arrTask) {
+            await executor.executeTask(r);
             arrTask.shift();
         }
+
     }
 }
