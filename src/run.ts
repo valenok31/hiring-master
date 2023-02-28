@@ -22,27 +22,27 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     let threads = true;
     let taskN_1: ITask;
 
-    function setArr() {
-        for (let i of taskNext.q) {
-            arr.push(i.targetId);
-        }
-        return arr.length;
-    }
+    /*  function setArr() {
+          for (let i of taskNext.q) {
+              arr.push(i.targetId);
+          }
+          return arr.length;
+      }
 
-    setArr();
+      setArr();
 
-    function sleep(milliseconds: any) {
-        const date = Date.now();
-        let currentDate = null;
-        do {
-            currentDate = Date.now();
-        } while (currentDate - date < milliseconds);
-    }
+      async function sleep(milliseconds: any) {
+          const date = Date.now();
+          let currentDate = null;
+          do {
+              currentDate = Date.now();
+          } while (currentDate - date < milliseconds);
+      }*/
 
-    function exec(t: ITask) {
+    function exec(t: ITask, arrTaskRunning: any) {
         executor.executeTask(t).then((r) => {
             spliceArr(arrTaskRunning, t.targetId);
-            return t.targetId;
+            //return t.targetId;
         })
     }
 
@@ -53,85 +53,57 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         }
     }
 
-    await generalFor();
+    await generalFor(queue, arrTaskRunning, secondQueue, maxThreads);
 
-    async function generalFor() {
-
-        for await (let task of queue) {
-
-
+    async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
+        console.log(arguments);
+        for await (let task of queueS) {
+            let runn = arrTaskRunning.length;
+            /*          if (secondQueue.length > 0) {
+                          for (let d = 0; d < secondQueue.length; d++) {
+                              if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
+                                  await executor.executeTask(secondQueue[d]);
+                                  const index = secondQueue.findIndex((ts: any) => {
+                                      return (ts.targetId == secondQueue[d].targetId)
+                                  });
+                                  if (index !== -1) {
+                                      secondQueue.splice(index, 1);
+                                      d--;
+                                  }
+                              }
+                          }
+                      }*/
             if (secondQueue.length > 0) {
-                for (let d = 0; d < secondQueue.length; d++) {
-                    if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                        await executor.executeTask(secondQueue[d]);
-                        const index = secondQueue.findIndex((ts: any) => {
-                            return (ts.targetId == secondQueue[d].targetId)
-                        });
-                        if (index !== -1) {
-                            secondQueue.splice(index, 1);
-                           // d--;
-                        }
-                        //secondQueue.shift();
-                    }
+                if (!arrTaskRunning.includes(secondQueue[0].targetId)) {
+                    await executor.executeTask(secondQueue[0]);
+                    secondQueue.shift();
                 }
             }
+
             if (arrTaskRunning.includes(task.targetId)) {
-                secondQueue.push(task);
-                /*                await executor.executeTask({
-                                    targetId: -1,
-                                    action: 'init'
-                                })*/
+                setTimeout(() => {
+                    secondQueue.push(task)
+                }, 0);
+                //secondQueue.push(task);
+                //await sleep(300);
+                //await executor.executeTask({targetId: -2, action: 'init'});
             } else {
-                /*                if (maxThreads > 3) {*/
-                if (arrTaskRunning.length < maxThreads - 1) {
+                if (runn < maxThreads - 1 && runn<11) {
                     arrTaskRunning.push(task.targetId);
-                    exec(task);
+                    exec(task, arrTaskRunning);
                 } else {
                     await executor.executeTask(task);
                 }
-                /*                } else {
-                                    await executor.executeTask(task);
-                                }*/
             }
         }
-        await executor.executeTask({
-            targetId: -1,
-            action: 'init'
-        });
-        await executor.executeTask({
-            targetId: -1,
-            action: 'init'
-        })
-        await executor.executeTask({
-            targetId: -1,
-            action: 'init'
-        });
-        await executor.executeTask({
-            targetId: -1,
-            action: 'init'
-        })
-
-
-
-
-
-
 
         if (secondQueue.length > 0) {
-            for (let d = 0; d < secondQueue.length; d++) {
-                if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                    await executor.executeTask(secondQueue[d]);
-                    const index = secondQueue.findIndex((ts: any) => {
-                        return (ts.targetId == secondQueue[d].targetId)
-                    });
-                    if (index !== -1) {
-                        secondQueue.splice(index, 1);
-                        d--;
-                    }
-                    //secondQueue.shift();
-                }
-            }
+            console.log('Recursive call!');
+            generalFor(secondQueue, arrTaskRunning, [], maxThreads);
         }
+
+        console.log('stop!');
+        return;
 
     }
 }
