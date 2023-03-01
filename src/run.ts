@@ -88,7 +88,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                 //await sleep(300);
                 //await executor.executeTask({targetId: -2, action: 'init'});
             } else {
-                if (runn < maxThreads - 1 && runn<11) {
+                if (runn < maxThreads - 1 && runn<10) {
                     arrTaskRunning.push(task.targetId);
                     exec(task, arrTaskRunning);
                 } else {
