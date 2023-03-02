@@ -39,7 +39,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
           } while (currentDate - date < milliseconds);
       }*/
 
-    async function exec(t: ITask, arrTaskRunning: any) {
+    function exec(t: ITask, arrTaskRunning: any) {
         executor.executeTask(t).then((r) => {
             spliceArr(arrTaskRunning, t.targetId);
             //return t.targetId;
@@ -58,23 +58,22 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
         console.log(arguments);
         for await (let task of queueS) {
-            if (secondQueue.length > 0) {
-                for (let d = 0; d < secondQueue.length; d++) {
-                    if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                        arrTaskRunning.push(secondQueue[d].targetId);
-                        await exec(secondQueue[d], arrTaskRunning);
-                        //await executor.executeTask(secondQueue[d]);
-                        const index = secondQueue.findIndex((ts: any) => {
-                            return (ts.targetId == secondQueue[d].targetId)
-                        });
-                        if (index !== -1) {
-                            secondQueue.splice(index, 1);
-                            d--;
-                        }
-
+            // if (secondQueue.length > 0) {
+            for (let d = 0; d < secondQueue.length; d++) {
+                if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
+                    arrTaskRunning.push(secondQueue[d].targetId);
+                    exec(secondQueue[d], arrTaskRunning);
+                    //await executor.executeTask(secondQueue[d]);
+                    const index = secondQueue.findIndex((ts: any) => {
+                        return (ts.targetId == secondQueue[d].targetId)
+                    });
+                    if (index !== -1) {
+                        secondQueue.splice(index, 1);
+                        d--;
                     }
                 }
             }
+            // }
             /*            if (secondQueue.length > 0) {
                             if (!arrTaskRunning.includes(secondQueue[0].targetId)) {
                                 await executor.executeTask(secondQueue[0]);
@@ -92,7 +91,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
                     arrTaskRunning.push(task.targetId);
-                    await exec(task, arrTaskRunning);
+                    exec(task, arrTaskRunning);
                 } else {
                     await executor.executeTask(task);
                 }
@@ -107,4 +106,6 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         return;
 
     }
+
+    await executor.executeTask({targetId: -2, action: 'init'});
 }
