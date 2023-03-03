@@ -102,10 +102,11 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             console.log('Recursive call!');
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads);
         }
+        await executor.executeTask({targetId: -2, action: 'init'});
         console.log('stop!');
         return;
 
     }
 
-    await executor.executeTask({targetId: -2, action: 'init'});
+
 }
