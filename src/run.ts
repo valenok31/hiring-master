@@ -61,9 +61,9 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             // if (secondQueue.length > 0) {
             for (let d = 0; d < secondQueue.length; d++) {
                 if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                    arrTaskRunning.push(secondQueue[d].targetId);
-                    exec(secondQueue[d], arrTaskRunning);
-                    //await executor.executeTask(secondQueue[d]);
+                   // arrTaskRunning.push(secondQueue[d].targetId);
+                   // exec(secondQueue[d], arrTaskRunning);
+                    await executor.executeTask(secondQueue[d]);
                     const index = secondQueue.findIndex((ts: any) => {
                         return (ts.targetId == secondQueue[d].targetId)
                     });
