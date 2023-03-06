@@ -20,7 +20,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     let n = 0;
     let threads = true;
-    let taskN_1: ITask;
+    // let taskN_1: ITask;
 
     /*  function setArr() {
           for (let i of taskNext.q) {
@@ -56,14 +56,20 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     await generalFor(queue, arrTaskRunning, secondQueue, maxThreads);
 
     async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
-        console.log(arguments);
         for await (let task of queueS) {
-            // if (secondQueue.length > 0) {
+            if (task.targetId == 0/* && task.action == 'cleanup'*/) {
+                setTimeout(async () => {
+                    await executor.executeTask(task);
+                }, 0)
+
+                continue;
+            }
+
             for (let d = 0; d < secondQueue.length; d++) {
                 if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                   // arrTaskRunning.push(secondQueue[d].targetId);
-                   // exec(secondQueue[d], arrTaskRunning);
-                    await executor.executeTask(secondQueue[d]);
+                    arrTaskRunning.push(secondQueue[d].targetId);
+                    exec(secondQueue[d], arrTaskRunning);
+                    // await executor.executeTask(secondQueue[d]);
                     const index = secondQueue.findIndex((ts: any) => {
                         return (ts.targetId == secondQueue[d].targetId)
                     });
@@ -90,8 +96,13 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                 //await executor.executeTask({targetId: -2, action: 'init'});
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
-                    arrTaskRunning.push(task.targetId);
-                    exec(task, arrTaskRunning);
+                    if (task.action == 'cleanup') {
+                        await executor.executeTask(task);
+                    } else {
+                        arrTaskRunning.push(task.targetId);
+                        exec(task, arrTaskRunning);
+                    }
+
                 } else {
                     await executor.executeTask(task);
                 }
@@ -99,14 +110,11 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         }
 
         if (secondQueue.length > 0) {
-            console.log('Recursive call!');
+
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads);
+
+
         }
-        await executor.executeTask({targetId: -2, action: 'init'});
-        console.log('stop!');
         return;
-
     }
-
-
 }
