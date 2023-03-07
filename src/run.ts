@@ -20,7 +20,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     let n = 0;
     let threads = true;
-    // let taskN_1: ITask;
+    let taskN_1: any = null;
 
     /*  function setArr() {
           for (let i of taskNext.q) {
@@ -56,13 +56,20 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     await generalFor(queue, arrTaskRunning, secondQueue, maxThreads);
 
     async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
+        //let threads = true;
         for await (let task of queueS) {
-            if (task.targetId == 0/* && task.action == 'cleanup'*/) {
+            if (threads) {
+                taskN_1 = task.targetId;
+                threads = false;
+            }
+            if (task.targetId == taskN_1 /*&& task.action == 'cleanup'*/) {
+                //arrTaskRunning.push(task.targetId);
                 setTimeout(async () => {
                     await executor.executeTask(task);
+                    //spliceArr(arrTaskRunning, task.targetId);
                 }, 0)
-
-                continue;
+                //await executor.executeTask(task);
+                //continue;
             }
 
             for (let d = 0; d < secondQueue.length; d++) {
