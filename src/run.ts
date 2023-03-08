@@ -117,10 +117,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         }
 
         if (secondQueue.length > 0) {
-
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads);
-
-
         }
         return;
     }
