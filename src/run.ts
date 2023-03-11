@@ -97,7 +97,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             if (arrTaskRunning.includes(task.targetId)) {
                 setTimeout(() => {
                     secondQueue.push(task)
-                }, 0)
+                }, 10)
                 //secondQueue.push(task);
                 //await sleep(300);
                 //await executor.executeTask({targetId: -2, action: 'init'});
