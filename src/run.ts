@@ -56,7 +56,6 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     await generalFor(queue, arrTaskRunning, secondQueue, maxThreads);
 
     async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
-        //let threads = true;
         for await (let task of queueS) {
             if (threads) {
                 taskN_1 = task.targetId;
@@ -68,15 +67,12 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                     await executor.executeTask(task);
                     //spliceArr(arrTaskRunning, task.targetId);
                 }, 0)
-                //await executor.executeTask(task);
-                //continue;
             }
 
             for (let d = 0; d < secondQueue.length; d++) {
                 if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
                     arrTaskRunning.push(secondQueue[d].targetId);
                     exec(secondQueue[d], arrTaskRunning);
-                    // await executor.executeTask(secondQueue[d]);
                     const index = secondQueue.findIndex((ts: any) => {
                         return (ts.targetId == secondQueue[d].targetId)
                     });
@@ -86,21 +82,11 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                     }
                 }
             }
-            // }
-            /*            if (secondQueue.length > 0) {
-                            if (!arrTaskRunning.includes(secondQueue[0].targetId)) {
-                                await executor.executeTask(secondQueue[0]);
-                                secondQueue.shift();
-                            }
-                        }*/
 
             if (arrTaskRunning.includes(task.targetId)) {
                 setTimeout(() => {
                     secondQueue.push(task)
                 }, 10)
-                //secondQueue.push(task);
-                //await sleep(300);
-                //await executor.executeTask({targetId: -2, action: 'init'});
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
                     if (task.action == 'cleanup') {
