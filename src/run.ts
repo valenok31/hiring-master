@@ -45,13 +45,17 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                 taskN_1 = task.targetId;
                 threads = false;
             }
-            if (task.targetId == taskN_1 /*&& task.action == 'cleanup'*/) {
-                //arrTaskRunning.push(task.targetId);
-                setTimeout(async () => {
-                    await executor.executeTask(task);
-                    //spliceArr(arrTaskRunning, task.targetId);
-                }, 0)
-            }
+            /*            if (task.targetId == taskN_1 /!*&& task.action == 'cleanup'*!/) {
+                            //arrTaskRunning.push(task.targetId);
+                            (function (taski: ITask) {
+                                executor.executeTask(taski);
+                            })(task);
+
+            /!*                setTimeout(async () => {
+                                await executor.executeTask(task);
+                                //spliceArr(arrTaskRunning, task.targetId);
+                            }, 0)*!/
+                        }*/
 
             for (let d = 0; d < secondQueue.length; d++) {
                 if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
@@ -73,20 +77,26 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                 }, 10)
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
-                    if (task.action == 'cleanup') {
-                        await executor.executeTask(task);
-                    } else {
-                        arrTaskRunning.push(task.targetId);
-                        exec(task, arrTaskRunning);
-                    }
+                    //  if (task.action == 'cleanup') {
+                    //      await executor.executeTask(task);
+                    //   } else {
+                    arrTaskRunning.push(task.targetId);
+                    exec(task, arrTaskRunning);
+                    // }
                 } else {
                     await executor.executeTask(task);
                 }
             }
         }
         if (secondQueue.length > 0) {
-            await generalFor(secondQueue, arrTaskRunning, [], maxThreads);
+            let xc = (async () => {
+                await generalFor(secondQueue, arrTaskRunning, [], maxThreads)
+            })();
+            if (xc) {
+                return false;
+            }
+        } else {
+            return true;
         }
-        return;
     }
 }
