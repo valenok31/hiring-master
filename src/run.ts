@@ -22,22 +22,6 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
     let threads = true;
     let taskN_1: any = null;
 
-    /*  function setArr() {
-          for (let i of taskNext.q) {
-              arr.push(i.targetId);
-          }
-          return arr.length;
-      }
-
-      setArr();
-
-      async function sleep(milliseconds: any) {
-          const date = Date.now();
-          let currentDate = null;
-          do {
-              currentDate = Date.now();
-          } while (currentDate - date < milliseconds);
-      }*/
 
     function exec(t: ITask, arrTaskRunning: any) {
         executor.executeTask(t).then((r) => {
@@ -95,13 +79,11 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
                         arrTaskRunning.push(task.targetId);
                         exec(task, arrTaskRunning);
                     }
-
                 } else {
                     await executor.executeTask(task);
                 }
             }
         }
-
         if (secondQueue.length > 0) {
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads);
         }
