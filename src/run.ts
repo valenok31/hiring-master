@@ -14,7 +14,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
 
     const arr: any = [];
     const arrTask: any = [];
-    const secondQueue: any = [];
+    const secondQueueStart: any = [];
     const arrTaskRunning: any = [];
     let taskNext = JSON.parse(JSON.stringify(queue));
 
@@ -37,61 +37,47 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
         }
     }
 
-    await generalFor(queue, arrTaskRunning, secondQueue, maxThreads);
+    await generalFor(queue, arrTaskRunning, secondQueueStart, maxThreads);
 
     async function generalFor(queueS: AsyncIterable<ITask>, arrTaskRunning: any, secondQueue: any, maxThreads: number) {
         for await (let task of queueS) {
-            if (threads) {
-                taskN_1 = task.targetId;
-                threads = false;
-            }
-            /*            if (task.targetId == taskN_1 /!*&& task.action == 'cleanup'*!/) {
-                            //arrTaskRunning.push(task.targetId);
-                            (function (taski: ITask) {
-                                executor.executeTask(taski);
-                            })(task);
-
-            /!*                setTimeout(async () => {
-                                await executor.executeTask(task);
-                                //spliceArr(arrTaskRunning, task.targetId);
-                            }, 0)*!/
-                        }*/
-
-            for (let d = 0; d < secondQueue.length; d++) {
-                if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
-                    arrTaskRunning.push(secondQueue[d].targetId);
-                    exec(secondQueue[d], arrTaskRunning);
-                    const index = secondQueue.findIndex((ts: any) => {
-                        return (ts.targetId == secondQueue[d].targetId)
-                    });
-                    if (index !== -1) {
-                        secondQueue.splice(index, 1);
-                        d--;
+            if (secondQueue.length > 0) {
+                for (let d = 0; d < secondQueue.length; d++) {
+                    if (!arrTaskRunning.includes(secondQueue[d].targetId)) {
+                        arrTaskRunning.push(secondQueue[d].targetId);
+                        exec(secondQueue[d], arrTaskRunning);
+                        const index = secondQueue.findIndex((ts: ITask) => {
+                            return (ts.targetId == secondQueue[d].targetId)
+                        });
+                        if (index !== -1) {
+                            secondQueue.splice(index, 1);
+                            d--;
+                        }
                     }
                 }
             }
 
             if (arrTaskRunning.includes(task.targetId)) {
-                setTimeout(() => {
-                    secondQueue.push(task)
-                }, 0)
+                /*                setTimeout(() => {
+                                    secondQueue.push(task)
+                                }, 0)*/
+                secondQueue.push(task);
+                await executor.executeTask({targetId: -2, action: "cleanup"});
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
-                    //  if (task.action == 'cleanup') {
-                    //      await executor.executeTask(task);
-                    //   } else {
                     arrTaskRunning.push(task.targetId);
                     exec(task, arrTaskRunning);
-                    // }
+                    await executor.executeTask({targetId: -4, action: "cleanup"});
                 } else {
                     await executor.executeTask(task);
                 }
             }
+
         }
+        await executor.executeTask({targetId: -3, action: "cleanup"});
         if (secondQueue.length > 0) {
-
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads)
-
         }
     }
+
 }
