@@ -74,7 +74,7 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             if (arrTaskRunning.includes(task.targetId)) {
                 setTimeout(() => {
                     secondQueue.push(task)
-                }, 10)
+                }, 0)
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
                     //  if (task.action == 'cleanup') {
@@ -89,14 +89,9 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             }
         }
         if (secondQueue.length > 0) {
-            let xc = (async () => {
-                await generalFor(secondQueue, arrTaskRunning, [], maxThreads)
-            })();
-            if (xc) {
-                return false;
-            }
-        } else {
-            return true;
+
+            await generalFor(secondQueue, arrTaskRunning, [], maxThreads)
+
         }
     }
 }
