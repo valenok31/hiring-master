@@ -58,23 +58,23 @@ export default async function run(executor: IExecutor, queue: AsyncIterable<ITas
             }
 
             if (arrTaskRunning.includes(task.targetId)) {
-                /*                setTimeout(() => {
+                                setTimeout(() => {
                                     secondQueue.push(task)
-                                }, 0)*/
-                secondQueue.push(task);
-                await executor.executeTask({targetId: -2, action: "cleanup"});
+                                }, 0)
+/*                secondQueue.push(task);
+                await executor.executeTask({targetId: -2, action: "cleanup"});*/
             } else {
                 if (arrTaskRunning.length < maxThreads - 1 && arrTaskRunning.length < 11) {
                     arrTaskRunning.push(task.targetId);
                     exec(task, arrTaskRunning);
-                    await executor.executeTask({targetId: -4, action: "cleanup"});
+                    //await executor.executeTask({targetId: -4, action: "cleanup"});
                 } else {
                     await executor.executeTask(task);
                 }
             }
 
         }
-        await executor.executeTask({targetId: -3, action: "cleanup"});
+        //await executor.executeTask({targetId: -3, action: "cleanup"});
         if (secondQueue.length > 0) {
             await generalFor(secondQueue, arrTaskRunning, [], maxThreads)
         }
